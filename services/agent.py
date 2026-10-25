@@ -1,5 +1,6 @@
 """AI Agent Engine supporting Google Gemini and Anthropic Claude with multi-turn conversations and business tools."""
 
+from __future__ import annotations
 import asyncio
 import json
 import os

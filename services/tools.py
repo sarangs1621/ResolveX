@@ -1,5 +1,6 @@
 """Tool implementations for AI Customer Support Agent."""
 
+from __future__ import annotations
 import json
 import os
 import urllib.request
