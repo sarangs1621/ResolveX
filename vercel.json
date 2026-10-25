@@ -1,19 +1,11 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "main.py": {
-      "includeFiles": [
-        "services/**",
-        "kb/**",
-        "static/**"
-      ]
+      "includeFiles": "{services/**,kb/**,static/**}"
     },
     "api/index.py": {
-      "includeFiles": [
-        "main.py",
-        "services/**",
-        "kb/**",
-        "static/**"
-      ]
+      "includeFiles": "{main.py,services/**,kb/**,static/**}"
     }
   },
   "rewrites": [
