@@ -1,5 +1,4 @@
-"""Authentication & Role-Based Access Control (RBAC) Service."""
-
+from __future__ import annotations
 import base64
 import hashlib
 import hmac

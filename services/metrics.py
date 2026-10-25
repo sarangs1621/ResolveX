@@ -1,5 +1,5 @@
 """Metrics, Telemetry & Observability Service."""
-
+from __future__ import annotations
 import time
 from collections import Counter
 from typing import Dict, List

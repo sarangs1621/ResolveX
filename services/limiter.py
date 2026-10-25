@@ -4,7 +4,7 @@ Protects /ask and /auth/login endpoints against Denial-of-Service and brute-forc
 attacks. Uses distributed Redis atomics when connected, with thread-safe in-memory
 sliding window fallback.
 """
-
+from __future__ import annotations
 import logging
 import os
 import time

@@ -3,7 +3,7 @@
 Supports PostgreSQL via asyncpg for high-concurrency cloud deployments (Kubernetes, AWS RDS)
 with graceful SQLite/aiosqlite fallback for standalone development environments.
 """
-
+from __future__ import annotations
 import json
 import logging
 import os
@@ -152,24 +152,28 @@ class AsyncDatabaseManager:
         )
 
     def _build_engine(self):
-        if self.is_postgres:
-            logger.info("Initializing PostgreSQL async engine with QueuePool (pool_size=10, max_overflow=20)")
-            return create_async_engine(
-                self.database_url,
-                poolclass=QueuePool,
-                pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
-                max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
-                pool_pre_ping=True,
-                pool_recycle=3600,
-                echo=False
-            )
-        else:
-            logger.info("Initializing SQLite async engine (aiosqlite)")
-            return create_async_engine(
-                self.database_url,
-                poolclass=NullPool,
-                echo=False
-            )
+        try:
+            if self.is_postgres:
+                logger.info("Initializing PostgreSQL async engine with QueuePool (pool_size=10, max_overflow=20)")
+                return create_async_engine(
+                    self.database_url,
+                    poolclass=QueuePool,
+                    pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
+                    max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
+                    pool_pre_ping=True,
+                    pool_recycle=3600,
+                    echo=False
+                )
+            else:
+                logger.info("Initializing SQLite async engine (aiosqlite)")
+                return create_async_engine(
+                    self.database_url,
+                    poolclass=NullPool,
+                    echo=False
+                )
+        except Exception as exc:
+            logger.warning(f"Could not build primary async engine ({exc}). Falling back to memory SQLite.")
+            return create_async_engine("sqlite+aiosqlite:///:memory:", poolclass=NullPool, echo=False)
 
     async def init_schema(self):
         """Create tables if they do not exist."""
@@ -237,5 +241,9 @@ class AsyncDatabaseManager:
         logger.info("Database connection pool disposed.")
 
 
-# Global default async database manager instance
-db_manager = AsyncDatabaseManager()
+# Global default async database manager instance with fail-safe fallback
+try:
+    db_manager = AsyncDatabaseManager()
+except Exception as exc:
+    logger.warning(f"Default AsyncDatabaseManager init error ({exc}). Using in-memory fallback.")
+    db_manager = AsyncDatabaseManager("sqlite+aiosqlite:///:memory:")

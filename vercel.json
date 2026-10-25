@@ -1,13 +1,25 @@
 {
   "functions": {
+    "main.py": {
+      "includeFiles": [
+        "services/**",
+        "kb/**",
+        "static/**"
+      ]
+    },
     "api/index.py": {
-      "includeFiles": "{main.py,services/**,kb/**,static/**}"
+      "includeFiles": [
+        "main.py",
+        "services/**",
+        "kb/**",
+        "static/**"
+      ]
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/index.py"
+      "destination": "/main.py"
     }
   ]
 }

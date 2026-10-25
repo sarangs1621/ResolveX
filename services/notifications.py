@@ -1,5 +1,5 @@
 """Escalation Notification Service supporting Slack Webhooks and Email dispatch."""
-
+from __future__ import annotations
 import json
 import logging
 import os

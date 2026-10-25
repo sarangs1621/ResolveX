@@ -10,7 +10,7 @@ Instruments the agent request lifecycle:
 Provides OpenTelemetry standard tracer with OTLP exporter support (Jaeger, Datadog)
 and an in-memory trace inspection buffer for instant observability without external daemons.
 """
-
+from __future__ import annotations
 import collections
 import contextlib
 import logging

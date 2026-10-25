@@ -13,18 +13,26 @@ Features:
 - Modern Single-Page Web Dashboard (Customer Live Chat, Escalation Desk, CRM Activity, KB Manager, Analytics)
 """
 
+from __future__ import annotations
 import json
 import logging
 import os
+import sys
+import tempfile
 import time
 import uuid
 from pathlib import Path
 from typing import Optional, List
 
+# Ensure project root is first in sys.path for serverless execution
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -71,12 +79,20 @@ if not IS_VERCEL:
     except Exception:
         pass
 
-# Initialize core platform services
-kb_service = KnowledgeBaseService(KB_DIR)
-crm_service = CRMService(DB_PATH)
-tools_registry = ToolRegistry(kb_service, crm_service)
-agent_engine = AgentEngine(tools_registry)
-notification_service = NotificationService()
+# Initialize core platform services with fail-safe fallback
+try:
+    kb_service = KnowledgeBaseService(KB_DIR)
+    crm_service = CRMService(DB_PATH)
+    tools_registry = ToolRegistry(kb_service, crm_service)
+    agent_engine = AgentEngine(tools_registry)
+    notification_service = NotificationService()
+except Exception as init_err:
+    logger.error(f"Error during service initialization: {init_err}", exc_info=True)
+    kb_service = KnowledgeBaseService(KB_DIR)
+    crm_service = CRMService(Path(":memory:"))
+    tools_registry = ToolRegistry(kb_service, crm_service)
+    agent_engine = AgentEngine(tools_registry)
+    notification_service = NotificationService()
 
 # Expose backward-compatible aliases for legacy imports/tests
 index = kb_service.index
@@ -541,5 +557,8 @@ def index_page():
     """Serve the single-page application dashboard."""
     html_path = STATIC_DIR / "index.html"
     if html_path.exists():
-        return FileResponse(html_path)
+        try:
+            return FileResponse(str(html_path))
+        except Exception:
+            return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
     return {"message": "ResolveX Enterprise Platform API is running. Visit /docs for Swagger UI."}

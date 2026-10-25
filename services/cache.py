@@ -3,7 +3,7 @@
 Caches high-confidence LLM responses for common queries (e.g. return policies,
 shipping times, pricing tiers), reducing API costs and latency from ~800ms to <15ms.
 """
-
+from __future__ import annotations
 import collections
 import hashlib
 import json
