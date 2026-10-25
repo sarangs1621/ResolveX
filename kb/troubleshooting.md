@@ -16,7 +16,7 @@ Every failed run shows the full error log in the run detail view. Runs are retri
 
 ## Webhook signature verification
 
-All outbound webhooks are signed with HMAC-SHA256 in the `X-Acme-Signature` header. Verify using your workspace's signing secret from Settings → Webhooks. Timestamps older than 5 minutes should be rejected to prevent replay attacks.
+All outbound webhooks are signed with HMAC-SHA256 in the `X-ResolveX-Signature` header. Verify using your workspace's signing secret from Settings → Webhooks. Timestamps older than 5 minutes should be rejected to prevent replay attacks.
 
 ## Status page
 

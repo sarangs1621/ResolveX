@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  resolvex-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: resolvex-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Persist SQLite CRM database and knowledge base articles
+      - ./crm.db:/app/crm.db
+      - ./kb:/app/kb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

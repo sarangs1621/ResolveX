@@ -1,8 +1,8 @@
 # Product FAQ
 
-## What is Acme Assist?
+## What is ResolveX?
 
-Acme Assist is an API platform for building automation workflows. You define workflows in YAML or through the visual editor, and Acme runs them on a schedule or in response to webhooks.
+ResolveX is an autonomous customer resolution and API automation platform. You define workflows in YAML or through the visual editor, and ResolveX runs them on a schedule or in response to webhooks.
 
 ## API keys
 
@@ -18,7 +18,7 @@ If you exceed the limit the API returns HTTP 429 with a `Retry-After` header. Ra
 
 ## Integrations
 
-Acme Assist integrates natively with Slack, Gmail, Notion, GitHub, and 40+ other tools. Custom integrations can be built with the webhooks API. Slack and Gmail integrations require workspace-admin approval to install.
+ResolveX integrates natively with Slack, Gmail, Notion, GitHub, and 40+ other tools. Custom integrations can be built with the webhooks API. Slack and Gmail integrations require workspace-admin approval to install.
 
 ## Data retention
 

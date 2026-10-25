@@ -1,3 +1,14 @@
 fastapi
 uvicorn
 anthropic
+google-genai
+python-dotenv
+sqlalchemy>=2.0.0
+greenlet
+asyncpg
+aiosqlite
+redis>=5.0.0
+opentelemetry-api
+opentelemetry-sdk
+
+

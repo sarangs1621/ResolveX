@@ -1,3 +1,5 @@
 graphify-out/
 crm.db
 __pycache__/
+.venv/
+.env

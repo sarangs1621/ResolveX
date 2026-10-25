@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ResolveX — Autonomous Enterprise Resolution & Support Intelligence with RAG, Real-Time Tool Execution, Live Escalation Triage, and Operational Telemetry.">
+  <title>ResolveX — Autonomous Enterprise Resolution & Support Intelligence</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div id="app-shell">
+
+    <!-- ====================================================================
+         Master Obsidian Sidebar
+         ==================================================================== -->
+    <aside class="app-sidebar" aria-label="Sidebar Navigation">
+      <div class="sidebar-header">
+        <div class="app-brand-prism" id="brand-logo-icon">
+          <svg class="svg-icon" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-details">
+          <h1 class="brand-title">Resolve<span style="color: var(--accent-indigo);">X</span></h1>
+          <div class="brand-status-chip">
+            <span class="pulse-gem"></span>
+            <span id="label-engine-status">Gemini 3.5 Live</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav-flow" aria-label="Primary Navigation">
+        <div class="nav-section-title">Customer Experience</div>
+        <button class="nav-item-btn active" id="nav-btn-chat" onclick="navigateTo('chat')">
+          <span class="nav-icon-label">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Live Support Portal</span>
+          </span>
+        </button>
+
+        <div class="nav-section-title" style="margin-top: 10px;">Support Operations</div>
+        <button class="nav-item-btn" id="nav-btn-escalations" onclick="navigateTo('escalations')">
+          <span class="nav-icon-label">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+              <path d="M12 8v4"/>
+              <path d="M12 16h.01"/>
+            </svg>
+            <span>Escalation Desk</span>
+          </span>
+          <span class="nav-counter-pill" id="sidebar-esc-count">0</span>
+        </button>
+
+        <button class="nav-item-btn" id="nav-btn-crm" onclick="navigateTo('crm')">
+          <span class="nav-icon-label">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>CRM & Activity</span>
+          </span>
+        </button>
+
+        <button class="nav-item-btn" id="nav-btn-kb" onclick="navigateTo('kb')">
+          <span class="nav-icon-label">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              <path d="M6 6h10"/>
+              <path d="M6 10h10"/>
+            </svg>
+            <span>Knowledge Base</span>
+          </span>
+        </button>
+
+        <div class="nav-section-title" style="margin-top: 10px;">Platform & Telemetry</div>
+        <button class="nav-item-btn" id="nav-btn-telemetry" onclick="navigateTo('telemetry')">
+          <span class="nav-icon-label">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            <span>Telemetry & Ops</span>
+          </span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Persona Switcher Card -->
+      <div class="sidebar-footer-pane">
+        <div class="persona-switch-card">
+          <div class="persona-meta">
+            <span class="persona-role-badge">Active Persona</span>
+            <select class="persona-select-native" id="persona-select-dropdown" onchange="onPersonaSelect(this.value)">
+              <option value="customer">Customer (Guest)</option>
+              <option value="agent">Support Agent Jane</option>
+              <option value="admin">System Administrator</option>
+            </select>
+          </div>
+          <svg class="svg-icon" style="color: var(--text-tertiary);" viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="5"/>
+            <path d="M20 21a8 8 0 1 0-16 0"/>
+          </svg>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ====================================================================
+         Master Workspace Body
+         ==================================================================== -->
+    <main class="app-workspace-body">
+
+      <!-- Workspace Topbar Header -->
+      <header class="workspace-topbar">
+        <div class="breadcrumbs-trail">
+          <span class="crumb-grey">Workspace</span>
+          <span class="crumb-slash">/</span>
+          <span class="crumb-active" id="topbar-crumb-title">Live Support Portal</span>
+        </div>
+
+        <div class="topbar-right-gadgets">
+          <div class="hud-pill">
+            <span class="pulse-gem" style="background-color: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald);"></span>
+            <span style="color: var(--accent-emerald); font-weight: 600;">Systems Operational</span>
+          </div>
+
+          <div class="hud-pill">
+            <svg class="svg-icon icon-sm" style="color: var(--accent-cyan);" viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+            </svg>
+            <span>Priority SLA:</span>
+            <strong style="color: var(--text-pure);">&lt; 800ms</strong>
+          </div>
+
+          <button class="btn-luxury-action" id="btn-sync-telemetry" onclick="syncCurrentWorkspace()" title="Sync Current Workspace">
+            <svg class="svg-icon icon-sm" viewBox="0 0 24 24">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M8 16H3v5"/>
+            </svg>
+            <span>Sync</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ================================================================
+           VIEW 1: Live Support Portal (Customer Chat)
+           ================================================================ -->
+      <section class="view-panel-section active-panel" id="panel-chat">
+        <div class="chat-center-stage">
+
+          <!-- Chat Stream Scroll Viewport -->
+          <div class="chat-stream-viewport" id="chat-messages-container">
+            <!-- Hero Greeting Stage -->
+            <div class="chat-hero-stage" id="chat-hero-greeting">
+              <div class="hero-sparkle-prism">
+                <svg class="svg-icon icon-lg" viewBox="0 0 24 24">
+                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+                </svg>
+              </div>
+              <h2 class="hero-headline">How can ResolveX assist you today?</h2>
+              <p class="hero-caption">
+                Instant verified answers powered by official documentation, live carrier shipment tracking, and automated 14-day refund processing.
+              </p>
+
+              <!-- Authentic Customer Support Scenario Matrix -->
+              <div class="prompt-starters-matrix">
+                <div class="starter-luxury-tile" onclick="submitQuickPrompt('Can you check the current fulfillment status and items for order ORD-9021?')">
+                  <div class="starter-icon-capsule">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                      <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                  </div>
+                  <div class="starter-text-block">
+                    <h4>Order Status & Fulfillment</h4>
+                    <p>Lookup line items, total amount, and delivery dates for ORD-9021</p>
+                  </div>
+                  <span class="starter-arrow-cue">→</span>
+                </div>
+
+                <div class="starter-luxury-tile" onclick="submitQuickPrompt('Where is my shipment FEDEX-992147 right now and when will it arrive?')">
+                  <div class="starter-icon-capsule" style="color: var(--accent-indigo);">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <rect width="16" height="12" x="1" y="3" rx="2"/>
+                      <path d="M17 8h4l3 3v4h-7V8z"/>
+                      <circle cx="5.5" cy="18.5" r="2.5"/>
+                      <circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                  </div>
+                  <div class="starter-text-block">
+                    <h4>Live Carrier Tracking</h4>
+                    <p>Real-time FedEx checkpoints, destination route, and delivery ETA</p>
+                  </div>
+                  <span class="starter-arrow-cue">→</span>
+                </div>
+
+                <div class="starter-luxury-tile" onclick="submitQuickPrompt('I want to request a refund for order ORD-9021 under your 14-day return policy.')">
+                  <div class="starter-icon-capsule" style="color: var(--accent-emerald);">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <rect width="20" height="14" x="2" y="5" rx="2"/>
+                      <line x1="2" y1="10" x2="22" y2="10"/>
+                    </svg>
+                  </div>
+                  <div class="starter-text-block">
+                    <h4>14-Day Return & Refund</h4>
+                    <p>Money-back guarantee verification and automated payment reversal</p>
+                  </div>
+                  <span class="starter-arrow-cue">→</span>
+                </div>
+
+                <div class="starter-luxury-tile" onclick="submitQuickPrompt('We need custom Enterprise pricing for 50 team seats, 99.9% uptime SLA, and invoice terms.')">
+                  <div class="starter-icon-capsule" style="color: var(--accent-amber);">
+                    <svg class="svg-icon" viewBox="0 0 24 24">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                  </div>
+                  <div class="starter-text-block">
+                    <h4>Enterprise & Custom Quotas</h4>
+                    <p>Inquire about high-volume API quotas, dedicated support, and SLAs</p>
+                  </div>
+                  <span class="starter-arrow-cue">→</span>
+                </div>
+              </div>
+            </div>
+            <!-- Injected Chat Bubbles -->
+          </div>
+
+          <!-- Floating Input Dock Capsule -->
+          <div class="chat-dock-island">
+            <form class="dock-glass-capsule" id="chat-form" onsubmit="onChatSubmit(event)">
+              <!-- Hidden inputs preserving backend API compatibility -->
+              <input type="hidden" id="chat-sender-email" value="customer@example.com">
+              <input type="hidden" id="chat-channel-select" value="web">
+
+              <!-- Legit Header Bar inside Dock -->
+              <div class="dock-meta-header">
+                <div class="dock-agent-indicator">
+                  <span class="pulse-gem" style="background-color: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald);"></span>
+                  <span class="dock-agent-label">ResolveX Autonomous Agent • Active (Sub-15ms Cache)</span>
+                </div>
+                <div class="dock-controls-right">
+                  <span class="dock-user-badge" id="dock-user-badge" title="Active signed-in customer account">
+                    <svg class="svg-icon icon-sm" viewBox="0 0 24 24">
+                      <circle cx="12" cy="8" r="5"/>
+                      <path d="M20 21a8 8 0 1 0-16 0"/>
+                    </svg>
+                    <span id="dock-user-email-text">customer@example.com</span>
+                  </span>
+                  <button type="button" class="btn-dock-action" onclick="clearChatThread()" title="Start a fresh conversation thread">
+                    <svg class="svg-icon icon-sm" viewBox="0 0 24 24">
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                      <path d="M3 3v5h5"/>
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                      <path d="M16 16h5v5"/>
+                    </svg>
+                    <span>New Session</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Main Input Row -->
+              <div class="dock-input-row">
+                <button type="button" class="btn-dock-attach" onclick="simulateAttachment()" title="Attach logs, screenshot, or invoice">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+                <input type="text" class="dock-text-input" id="chat-input-text" placeholder="Type your message, order number, or question... (Press Enter ↵ to send)" autocomplete="off" required>
+                <button type="submit" class="btn-send-dock" id="btn-send-chat">
+                  <span>Send</span>
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Trust & Security Strip -->
+              <div class="dock-trust-strip">
+                <div class="trust-flex-items">
+                  <span class="trust-item">
+                    <svg class="svg-icon icon-sm" style="color: var(--accent-cyan);" viewBox="0 0 24 24">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <span>Instant SLA (&lt;800ms)</span>
+                  </span>
+                  <span class="trust-dot">•</span>
+                  <span class="trust-item">
+                    <svg class="svg-icon icon-sm" style="color: var(--accent-emerald);" viewBox="0 0 24 24">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                    </svg>
+                    <span>SOC-2 & GDPR Protected</span>
+                  </span>
+                </div>
+                <div class="trust-flex-right">
+                  <span>Press <span class="key-badge">Enter ↵</span> to send</span>
+                </div>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================================================================
+           VIEW 2: Escalations Desk (Linear Split Inbox)
+           ================================================================ -->
+      <section class="view-panel-section" id="panel-escalations">
+        <div class="escalation-inbox-stage">
+          <!-- Queue List Column -->
+          <div class="inbox-queue-column">
+            <div class="inbox-toolbar-header">
+              <span style="font-family: var(--font-display); font-weight: 700; font-size: 13.5px; color: var(--text-pure);">Triage Queue</span>
+              <div class="pill-switch-group">
+                <button class="btn-pill-switch active" id="filter-btn-open" onclick="filterEscalations('open')">Open</button>
+                <button class="btn-pill-switch" id="filter-btn-all" onclick="filterEscalations('all')">All</button>
+              </div>
+            </div>
+            <div class="inbox-ticket-scroller" id="escalation-inbox-cards">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+
+          <!-- Detail Inspection Column -->
+          <div class="inbox-inspect-column" id="escalation-detail-pane">
+            <div style="text-align: center; margin: auto; color: var(--text-tertiary);">
+              Select an escalation ticket from the left queue to review and respond.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           VIEW 3: CRM & Interaction Explorer
+           ================================================================ -->
+      <section class="view-panel-section" id="panel-crm">
+        <div class="crm-workspace-flow">
+          <div class="crm-toolbar-strip">
+            <div class="search-capsule-input">
+              <svg class="svg-icon icon-sm" style="color: var(--text-tertiary);" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="crm-search-query" placeholder="Search interactions by question, customer, or response..." oninput="onCRMSearch(this.value)">
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-luxury-action" id="subtab-btn-conv" onclick="switchCRMSubTab('conversations')">Conversations</button>
+              <button class="btn-luxury-action" id="subtab-btn-tick" onclick="switchCRMSubTab('tickets')">Support Tickets</button>
+            </div>
+          </div>
+
+          <!-- Conversations Table -->
+          <div class="table-luxury-glass" id="crm-table-conversations-card">
+            <table class="luxury-data-grid">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Timestamp</th>
+                  <th>Customer</th>
+                  <th>Channel</th>
+                  <th>Query Excerpt</th>
+                  <th>Confidence</th>
+                  <th>Gating</th>
+                  <th>CSAT</th>
+                  <th>Tool Log</th>
+                </tr>
+              </thead>
+              <tbody id="crm-conversations-tbody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Tickets Table -->
+          <div class="table-luxury-glass" id="crm-table-tickets-card" style="display: none;">
+            <table class="luxury-data-grid">
+              <thead>
+                <tr>
+                  <th>Ticket Ref</th>
+                  <th>Created</th>
+                  <th>Customer Email</th>
+                  <th>Priority</th>
+                  <th>Issue Summary</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="crm-tickets-tbody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           VIEW 4: Knowledge Base Studio
+           ================================================================ -->
+      <section class="view-panel-section" id="panel-kb">
+        <div class="kb-studio-grid">
+          <!-- Article List Sidebar -->
+          <div class="kb-sidebar-shelf">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
+              <span style="font-family: var(--font-display); font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--text-tertiary);">Articles</span>
+              <button class="btn-luxury-action" style="padding: 4px 10px; font-size: 11px;" onclick="reindexKnowledgeBase()">
+                <svg class="svg-icon icon-sm" viewBox="0 0 24 24">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                <span>Re-index</span>
+              </button>
+            </div>
+            <div id="kb-sidebar-articles-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1;">
+              <!-- Populated via JS -->
+            </div>
+            <button class="btn-send-dock" style="justify-content: center; font-size: 12px;" onclick="promptNewArticle()">
+              + New Article
+            </button>
+          </div>
+
+          <!-- Markdown Editor & Preview Pane -->
+          <div class="kb-editor-pane">
+            <div class="kb-toolbar-strip">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 11.5px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Doc:</span>
+                <input type="text" id="kb-active-filename" value="billing.md" style="background: transparent; border: 1px solid var(--border-subtle); color: var(--text-pure); font-family: var(--font-mono); font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-xs); width: 220px;">
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-luxury-action" style="color: var(--accent-rose);" onclick="deleteActiveArticle()">Delete</button>
+                <button class="btn-send-dock" style="padding: 6px 14px; font-size: 12px;" onclick="saveActiveArticle()">Save & Re-Index</button>
+              </div>
+            </div>
+
+            <div class="kb-dual-split">
+              <textarea class="kb-raw-textarea" id="kb-markdown-editor" oninput="renderKBMarkdown(this.value)" placeholder="Write your markdown article..."></textarea>
+              <div class="kb-preview-scroll" id="kb-markdown-preview"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           VIEW 5: Telemetry & Ops Dashboard
+           ================================================================ -->
+      <section class="view-panel-section" id="panel-telemetry">
+        <div class="telemetry-flow-grid">
+          <!-- Top KPI Stats Row -->
+          <div class="kpi-luxury-matrix">
+            <div class="kpi-luxury-card">
+              <span style="font-size: 11.5px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Total Interactions</span>
+              <span class="kpi-hero-num" id="telemetry-total-interactions">0</span>
+              <span style="font-size: 11.5px; color: var(--accent-cyan);">Platform queries processed</span>
+            </div>
+
+            <div class="kpi-luxury-card">
+              <span style="font-size: 11.5px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Automation Rate</span>
+              <span class="kpi-hero-num" id="telemetry-auto-rate" style="color: var(--accent-emerald);">0%</span>
+              <span style="font-size: 11.5px; color: var(--accent-emerald);">Resolved without escalation</span>
+            </div>
+
+            <div class="kpi-luxury-card">
+              <span style="font-size: 11.5px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Average Latency</span>
+              <span class="kpi-hero-num" id="telemetry-avg-latency" style="color: var(--accent-indigo);">0 ms</span>
+              <span style="font-size: 11.5px; color: var(--text-tertiary);">FastAPI roundtrip response</span>
+            </div>
+
+            <div class="kpi-luxury-card">
+              <span style="font-size: 11.5px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase;">Platform Uptime</span>
+              <span class="kpi-hero-num" id="telemetry-uptime">0s</span>
+              <span style="font-size: 11.5px; color: var(--text-tertiary);">Zero restart availability</span>
+            </div>
+          </div>
+
+          <!-- Charts Matrix Row -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="kpi-luxury-card">
+              <div class="card-title-flex">
+                <svg class="svg-icon icon-sm" style="color: var(--accent-indigo);" viewBox="0 0 24 24">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+                <h3 class="card-section-title">Business Tool Execution Breakdown</h3>
+              </div>
+              <div id="chart-tools-container">
+                <!-- Dynamically populated bars -->
+              </div>
+            </div>
+
+            <div class="kpi-luxury-card">
+              <div class="card-title-flex">
+                <svg class="svg-icon icon-sm" style="color: var(--accent-cyan);" viewBox="0 0 24 24">
+                  <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+                  <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+                  <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>
+                </svg>
+                <h3 class="card-section-title">Traffic Breakdown by Channel</h3>
+              </div>
+              <div id="chart-channel-container">
+                <!-- Dynamically populated bars -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Webhook Alert Stream -->
+          <div class="kpi-luxury-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <div class="card-title-flex">
+                <svg class="svg-icon icon-sm" style="color: var(--accent-amber);" viewBox="0 0 24 24">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <h3 class="card-section-title">Dispatched Escalation Alerts (Slack & Email Webhooks)</h3>
+              </div>
+              <button class="btn-luxury-action" style="padding: 4px 10px; font-size: 11px;" onclick="loadTelemetryAlerts()">
+                <svg class="svg-icon icon-sm" viewBox="0 0 24 24">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                  <path d="M16 16h5v5"/>
+                </svg>
+                <span>Refresh Alerts</span>
+              </button>
+            </div>
+            <div id="telemetry-alerts-feed" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Modal for Inspecting Tool Calls & Execution Details -->
+  <div class="modal-layer-scrim" id="modal-tool-inspector" onclick="closeToolModal(event)">
+    <div class="modal-window-dialog" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-family: var(--font-display); font-size: 15px; color: var(--text-pure);">Tool Execution Inspector</h3>
+        <button style="background: transparent; border: none; color: var(--text-tertiary); font-size: 20px; cursor: pointer;" onclick="closeToolModal()">&times;</button>
+      </div>
+      <div style="background: rgba(0,0,0,0.5); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); max-height: 420px; overflow-y: auto;">
+        <pre id="modal-json-content" style="font-family: var(--font-mono); font-size: 12px; color: #E2E8F0; margin: 0; white-space: pre-wrap; word-break: break-all;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
