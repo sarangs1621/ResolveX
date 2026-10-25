@@ -51,10 +51,16 @@ load_dotenv()
 logger = logging.getLogger("support_agent")
 logging.basicConfig(level=logging.INFO)
 
-IS_VERCEL = os.getenv("VERCEL") == "1" or os.getenv("NOW_REGION") is not None
+import tempfile
+
+IS_VERCEL = bool(
+    os.getenv("VERCEL") == "1"
+    or os.getenv("VERCEL_ENV")
+    or os.getenv("NOW_REGION")
+)
 BASE_DIR = Path(__file__).resolve().parent
 KB_DIR = BASE_DIR / "kb"
-DB_PATH = Path("/tmp/crm.db") if IS_VERCEL else (BASE_DIR / "crm.db")
+DB_PATH = Path(tempfile.gettempdir()) / "crm.db" if IS_VERCEL else (BASE_DIR / "crm.db")
 STATIC_DIR = BASE_DIR / "static"
 
 # Ensure essential directories exist if writable

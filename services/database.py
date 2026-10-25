@@ -125,7 +125,15 @@ class OrderModel(Base):
 class AsyncDatabaseManager:
     def __init__(self, database_url: Optional[str] = None):
         if not database_url:
-            raw_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./crm.db")
+            import tempfile
+            is_serverless = bool(
+                os.getenv("VERCEL") == "1"
+                or os.getenv("VERCEL_ENV")
+                or os.getenv("NOW_REGION")
+            )
+            temp_db = (Path(tempfile.gettempdir()) / "crm.db").as_posix()
+            default_db = f"sqlite+aiosqlite:///{temp_db}" if is_serverless else "sqlite+aiosqlite:///./crm.db"
+            raw_url = os.getenv("DATABASE_URL", default_db)
             # Convert standard postgresql:// to async postgresql+asyncpg:// if needed
             if raw_url.startswith("postgresql://") and not raw_url.startswith("postgresql+asyncpg://"):
                 raw_url = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)

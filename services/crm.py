@@ -7,14 +7,29 @@ from pathlib import Path
 
 class CRMService:
     def __init__(self, db_path: Path):
-        # On Vercel or read-only serverless environments, redirect SQLite database to /tmp
-        if os.getenv("VERCEL") == "1" or not os.access(db_path.parent, os.W_OK):
-            self.db_path = Path("/tmp/crm.db")
+        import tempfile
+        is_serverless = bool(
+            os.getenv("VERCEL") == "1"
+            or os.getenv("VERCEL_ENV")
+            or os.getenv("NOW_REGION")
+            or not os.access(db_path.parent, os.W_OK)
+        )
+        if is_serverless:
+            self.db_path = Path(tempfile.gettempdir()) / "crm.db"
         else:
             self.db_path = db_path
-        self.db = sqlite3.connect(self.db_path, check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self._init_db()
+
+        try:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            self.db = sqlite3.connect(str(self.db_path), check_same_thread=False)
+            self.db.row_factory = sqlite3.Row
+            self._init_db()
+        except Exception:
+            # Absolute fallback to in-memory SQLite if filesystem is fully locked
+            self.db_path = Path(":memory:")
+            self.db = sqlite3.connect(":memory:", check_same_thread=False)
+            self.db.row_factory = sqlite3.Row
+            self._init_db()
 
     def _init_db(self):
         cur = self.db.cursor()
