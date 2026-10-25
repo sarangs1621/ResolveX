@@ -1,17 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
   "functions": {
     "main.py": {
       "includeFiles": "{services/**,kb/**,static/**}"
-    },
-    "api/index.py": {
-      "includeFiles": "{main.py,services/**,kb/**,static/**}"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/main.py"
-    }
-  ]
+  }
 }

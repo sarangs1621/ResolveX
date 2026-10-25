@@ -211,6 +211,8 @@ async def observability_middleware(request: Request, call_next):
     duration_ms = (time.time() - start_ts) * 1000
     try:
         response.headers["X-Response-Time-Ms"] = f"{duration_ms:.2f}"
+        response.headers["X-Debug-Path"] = str(request.url.path)
+        response.headers["X-Debug-Raw"] = str(request.scope.get("path", ""))
         path = request.url.path
         if not path.startswith("/static"):
             metrics_service.record_request(path, response.status_code, duration_ms)
