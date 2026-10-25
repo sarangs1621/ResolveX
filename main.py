@@ -30,14 +30,63 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import traceback
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse, HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
-load_dotenv()
+# Emergency ASGI fallback app in case fastapi or packaging fails
+_BOOTSTRAP_ERROR = None
+_BOOTSTRAP_TRACE = None
+
+async def _emergency_app(scope, receive, send):
+    if scope["type"] == "http":
+        await send({
+            "type": "http.response.start",
+            "status": 500,
+            "headers": [
+                [b"content-type", b"application/json; charset=utf-8"],
+                [b"cache-control", b"no-cache"]
+            ]
+        })
+        payload = {
+            "status": "emergency_startup_failed",
+            "error": str(_BOOTSTRAP_ERROR),
+            "traceback": _BOOTSTRAP_TRACE.splitlines() if _BOOTSTRAP_TRACE else [],
+            "sys_path": sys.path,
+            "cwd": os.getcwd(),
+            "python_version": sys.version
+        }
+        await send({
+            "type": "http.response.body",
+            "body": json.dumps(payload, indent=2).encode("utf-8")
+        })
+
+app = _emergency_app
+
+try:
+    from dotenv import load_dotenv
+    from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import FileResponse, PlainTextResponse, HTMLResponse, JSONResponse
+    from fastapi.staticfiles import StaticFiles
+    from pydantic import BaseModel
+
+    # Real FastAPI application
+    app = FastAPI(
+        title="ResolveX — Autonomous Enterprise Resolution & Support Intelligence",
+        description="ResolveX autonomous customer support & resolution platform with RAG, business tool calling, RBAC, semantic caching, and human escalation triage.",
+        version="3.0.0"
+    )
+
+    # Enable CORS for local testing/web embedding
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+except BaseException as exc:
+    _BOOTSTRAP_ERROR = exc
+    _BOOTSTRAP_TRACE = traceback.format_exc()
+
 logger = logging.getLogger("support_agent")
 logging.basicConfig(level=logging.INFO)
 
@@ -46,34 +95,17 @@ IS_VERCEL = bool(
     or os.getenv("VERCEL_ENV")
     or os.getenv("NOW_REGION")
 )
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = PROJECT_ROOT
 KB_DIR = BASE_DIR / "kb"
 DB_PATH = Path(tempfile.gettempdir()) / "crm.db" if IS_VERCEL else (BASE_DIR / "crm.db")
 STATIC_DIR = BASE_DIR / "static"
 
-# Ensure essential directories exist if writable
 if not IS_VERCEL:
     try:
         KB_DIR.mkdir(exist_ok=True)
         STATIC_DIR.mkdir(exist_ok=True)
     except Exception:
         pass
-
-# Initialize FastAPI application IMMEDIATELY so Vercel can always import it
-app = FastAPI(
-    title="ResolveX — Autonomous Enterprise Resolution & Support Intelligence",
-    description="ResolveX autonomous customer support & resolution platform with RAG, business tool calling, RBAC, semantic caching, and human escalation triage.",
-    version="3.0.0"
-)
-
-# Enable CORS for local testing/web embedding
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 STARTUP_ERROR = None
 STARTUP_TRACE = None
@@ -170,14 +202,20 @@ def exec_tool(name: str, tool_input: dict) -> str:
 @app.middleware("http")
 async def observability_middleware(request: Request, call_next):
     start_ts = time.time()
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        logger.error(f"Unhandled error processing {request.url.path}: {exc}", exc_info=True)
+        return JSONResponse(status_code=500, content={"error": str(exc), "path": request.url.path})
+
     duration_ms = (time.time() - start_ts) * 1000
-    response.headers["X-Response-Time-Ms"] = f"{duration_ms:.2f}"
-    
-    path = request.url.path
-    # Skip recording static file asset hits to avoid polluting business metrics
-    if not path.startswith("/static"):
-        metrics_service.record_request(path, response.status_code, duration_ms)
+    try:
+        response.headers["X-Response-Time-Ms"] = f"{duration_ms:.2f}"
+        path = request.url.path
+        if not path.startswith("/static"):
+            metrics_service.record_request(path, response.status_code, duration_ms)
+    except Exception:
+        pass
     return response
 
 
@@ -631,8 +669,5 @@ def index_page():
     """Serve the single-page application dashboard."""
     html_path = STATIC_DIR / "index.html"
     if html_path.exists():
-        try:
-            return FileResponse(str(html_path))
-        except Exception:
-            return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+        return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
     return {"message": "ResolveX Enterprise Platform API is running. Visit /docs for Swagger UI."}
