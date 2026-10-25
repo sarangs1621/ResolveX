@@ -18,7 +18,7 @@ os.environ.setdefault("VERCEL", "1")
 
 try:
     from main import app
-except Exception as exc:
+except BaseException as exc:
     import traceback
     err_trace = traceback.format_exc()
     print(f"[VERCEL STARTUP EXCEPTION]:\n{err_trace}", file=sys.stderr)
@@ -27,7 +27,7 @@ except Exception as exc:
 
     app = FastAPI(title="ResolveX — Startup Diagnostic")
 
-    @app.get("/{full_path:path}")
+    @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"])
     def startup_error(full_path: str = ""):
         return JSONResponse(
             status_code=500,
